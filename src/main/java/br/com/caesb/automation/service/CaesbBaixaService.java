@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,6 +21,9 @@ import java.util.List;
 public class CaesbBaixaService {
 
     private static final Logger logger = LogManager.getLogger(CaesbBaixaService.class);
+    
+    @Autowired
+    private EmailNotificationService emailNotificationService;
     private static final String BASE_URL = "https://sistemas.caesb.df.gov.br/gcom/app/atendimento/os/baixa";
     private static final String OS_LIST_URL = "https://sistemas.caesb.df.gov.br/gcom/app/atendimento/os/controleOs/controle";
     private static final int MAX_RETRIES = 3;
@@ -35,6 +37,7 @@ public class CaesbBaixaService {
 
     public BaixaResultado baixarOs(CaesbSession session, String os) {
         logger.info("Starting baixa for OS {}", os);
+        LocalDateTime inicioExecucao = LocalDateTime.now();
 
         Playwright playwright = null;
         Browser browser = null;
@@ -207,18 +210,43 @@ public class CaesbBaixaService {
 
             logger.info("OS {} processed successfully", os);
 //            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/success-" + os + ".png")));
+            
+            // Enviar notificação de sucesso
+            try {
+                LocalDateTime fimExecucao = LocalDateTime.now();
+                emailNotificationService.enviarNotificacaoSucesso(os, inicioExecucao, fimExecucao);
+            } catch (Exception e) {
+                logger.warn("Failed to send success notification for OS {}: {}", os, e.getMessage());
+            }
+            
             return new BaixaResultado(os, true, List.of("OK"));
         } catch (PlaywrightException e) {
             logger.error("Playwright error for OS {}: {}", os, e.getMessage(), e);
             if (page != null) {
 //                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/playwright-error-" + os + ".png")));
             }
+            
+            // Enviar notificação de erro
+            try {
+                emailNotificationService.enviarNotificacaoErro(os, "Playwright error: " + e.getMessage(), inicioExecucao);
+            } catch (Exception emailError) {
+                logger.warn("Failed to send error notification for OS {}: {}", os, emailError.getMessage());
+            }
+            
             return new BaixaResultado(os, false, List.of("Playwright error: " + e.getMessage()));
         } catch (Exception e) {
             logger.error("Unexpected error for OS {}: {}", os, e.getMessage(), e);
             if (page != null) {
 //                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/unexpected-error-" + os + ".png")));
             }
+            
+            // Enviar notificação de erro
+            try {
+                emailNotificationService.enviarNotificacaoErro(os, "Unexpected error: " + e.getMessage(), inicioExecucao);
+            } catch (Exception emailError) {
+                logger.warn("Failed to send error notification for OS {}: {}", os, emailError.getMessage());
+            }
+            
             return new BaixaResultado(os, false, List.of("Unexpected error: " + e.getMessage()));
         } finally {
             if (page != null) {

@@ -2979,3 +2979,138 @@ Caused by: com.microsoft.playwright.impl.TargetClosedError: Error {
 2025-08-08 16:53:13 INFO  TomcatWebServer:241 - Tomcat started on port 8080 (http) with context path ''
 2025-08-08 16:53:13 INFO  CaesbOsAutomationApplication:56 - Started CaesbOsAutomationApplication in 60.501 seconds (process running for 81.721)
 2025-08-08 16:53:41 INFO  Http11NioProtocol:173 - Stopping ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:06:54 INFO  CaesbOsAutomationApplication:50 - Starting CaesbOsAutomationApplication using Java 17.0.12 with PID 30844 (D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation\target\classes started by maike in D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation)
+2025-08-21 07:06:55 INFO  CaesbOsAutomationApplication:654 - No active profile set, falling back to 1 default profile: "default"
+2025-08-21 07:06:56 INFO  TomcatWebServer:109 - Tomcat initialized with port 8080 (http)
+2025-08-21 07:06:56 INFO  Http11NioProtocol:173 - Initializing ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:06:56 INFO  StandardService:173 - Starting service [Tomcat]
+2025-08-21 07:06:56 INFO  StandardEngine:173 - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2025-08-21 07:06:57 INFO  [/]:173 - Initializing Spring embedded WebApplicationContext
+2025-08-21 07:06:57 INFO  ServletWebServerApplicationContext:296 - Root WebApplicationContext: initialization completed in 1823 ms
+2025-08-21 07:06:58 INFO  Http11NioProtocol:173 - Starting ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:06:58 INFO  TomcatWebServer:241 - Tomcat started on port 8080 (http) with context path ''
+2025-08-21 07:06:58 INFO  CaesbOsAutomationApplication:56 - Started CaesbOsAutomationApplication in 3.834 seconds (process running for 5.199)
+2025-08-21 07:11:08 INFO  CaesbOsAutomationApplication:50 - Starting CaesbOsAutomationApplication using Java 17.0.12 with PID 23780 (D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation\target\classes started by maike in D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation)
+2025-08-21 07:11:08 INFO  CaesbOsAutomationApplication:654 - No active profile set, falling back to 1 default profile: "default"
+2025-08-21 07:11:10 INFO  TomcatWebServer:109 - Tomcat initialized with port 8080 (http)
+2025-08-21 07:11:10 INFO  Http11NioProtocol:173 - Initializing ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:11:10 INFO  StandardService:173 - Starting service [Tomcat]
+2025-08-21 07:11:10 INFO  StandardEngine:173 - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2025-08-21 07:11:10 INFO  [/]:173 - Initializing Spring embedded WebApplicationContext
+2025-08-21 07:11:10 INFO  ServletWebServerApplicationContext:296 - Root WebApplicationContext: initialization completed in 2160 ms
+2025-08-21 07:11:11 INFO  Http11NioProtocol:173 - Starting ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:11:11 INFO  TomcatWebServer:241 - Tomcat started on port 8080 (http) with context path ''
+2025-08-21 07:11:11 INFO  CaesbOsAutomationApplication:56 - Started CaesbOsAutomationApplication in 3.952 seconds (process running for 5.122)
+2025-08-21 07:11:49 INFO  CaesbOsAutomationApplication:50 - Starting CaesbOsAutomationApplication using Java 17.0.12 with PID 9708 (D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation\target\classes started by maike in D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation)
+2025-08-21 07:11:49 INFO  CaesbOsAutomationApplication:654 - No active profile set, falling back to 1 default profile: "default"
+2025-08-21 07:11:51 INFO  TomcatWebServer:109 - Tomcat initialized with port 8080 (http)
+2025-08-21 07:11:51 INFO  Http11NioProtocol:173 - Initializing ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:11:51 INFO  StandardService:173 - Starting service [Tomcat]
+2025-08-21 07:11:51 INFO  StandardEngine:173 - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2025-08-21 07:11:51 INFO  [/]:173 - Initializing Spring embedded WebApplicationContext
+2025-08-21 07:11:51 INFO  ServletWebServerApplicationContext:296 - Root WebApplicationContext: initialization completed in 2058 ms
+2025-08-21 07:11:53 INFO  Http11NioProtocol:173 - Starting ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:11:53 INFO  TomcatWebServer:241 - Tomcat started on port 8080 (http) with context path ''
+2025-08-21 07:11:53 INFO  CaesbOsAutomationApplication:56 - Started CaesbOsAutomationApplication in 4.408 seconds (process running for 6.218)
+2025-08-21 07:14:02 INFO  [/]:173 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-08-21 07:14:02 INFO  DispatcherServlet:532 - Initializing Servlet 'dispatcherServlet'
+2025-08-21 07:14:02 INFO  DispatcherServlet:554 - Completed initialization in 1 ms
+2025-08-21 07:14:59 INFO  CaesbLoginService:28 - Starting login process...
+2025-08-21 07:15:14 INFO  CaesbLoginService:31 - Browser launched in headless mode.
+2025-08-21 07:15:15 INFO  CaesbLoginService:34 - Navigating to login page...
+2025-08-21 07:15:16 INFO  CaesbLoginService:37 - Filling in username and password.
+2025-08-21 07:15:17 INFO  CaesbLoginService:41 - Login form submitted.
+2025-08-21 07:15:17 INFO  CaesbLoginService:44 - Waited for page to load.
+2025-08-21 07:15:20 INFO  CaesbLoginService:47 - Navigated to OS control page.
+2025-08-21 07:15:20 INFO  CaesbLoginService:55 - Retrieved ViewState: e1s1
+2025-08-21 07:15:20 INFO  CaesbLoginService:59 - Retrieved execution parameter: e1s1
+2025-08-21 07:15:20 INFO  CaesbLoginService:61 - Retrieving cookies...
+2025-08-21 07:15:20 INFO  CaesbLoginService:67 - Cookies retrieved successfully.
+2025-08-21 07:15:20 INFO  CaesbLoginService:73 - Login process completed successfully. Returning session object.
+2025-08-21 07:15:20 INFO  CaesbOsService:50 - Iniciando processo para listar OS pendentes (250 por página).
+2025-08-21 07:16:07 INFO  CaesbOsService:155 - Encontradas 250 OS pendentes: [3402108082532616, 3380015082532610, 3381301082532609, 3380032082532608, 3380027082532607, 3381203082532606, 3381201082532604, 3381210082532601, 3381210082532600, 3381516082532599, 3381301082532595, 3380324082532593, 3380035082532591, 3380026082532588, 3380544082532587, 3380037082532586, 3381301082532585, 3381301082532584, 3381301082532583, 3380040082532582, 3380403082532580, 3380027082532579, 3001971082532577, 3300501082532575, 3380032082532574, 3380031082532573, 3381516082532571, 3381007082532570, 3381003082532568, 3380001082532567, 3380118082532566, 3380405082532564, 3001971082532563, 3380036082532562, 3380036082532561, 3380405082532559, 3381201082532560, 3402700082532558, 3380034082532557, 3381204082532556, 3380121082532555, 3381013082532553, 3380020082532554, 3381213082532552, 3380024082532549, 3402706082532548, 3380332082532547, 3381203082532546, 3380404082532545, 3381301082532543, 3381004082532542, 3380610082532540, 3380024082532539, 3380519082532536, 3380029082532535, 3380502082532530, 3380031082532526, 3381011082532523, 3380036082532521, 3380001082532517, 3380207082532514, 3380351082532512, 3380025082532511, 3380015082532509, 3380011082532501, 3380031082532496, 3381301082532499, 3381203082532495, 3381203082532493, 3380625082532492, 3381201082532489, 3381201082532488, 3380610082532483, 3380208082532484, 3381301082532482, 3381402082532481, 3381201082532477, 3380042082532476, 3380015082532475, 3380042082532473, 3380001082532472, 3380001082532471, 3380518082532470, 3402506082532469, 3380001082532465, 3380001082532464, 3380319082532463, 3380311082532462, 3380525082532461, 3380038082532460, 3381202082532457, 3380038082532458, 3380038082532459, 3380038082532456, 3381052082532455, 3380107082532454, 3380407082532452, 3381204082532451, 3381210082532449, 3380029082532448, 3380026082532447, 3380038082532445, 3380038082532444, 3381514082532442, 3380038082532438, 3380406082532439, 3403327082532437, 3380040082532436, 3381005082532435, 3300506082532434, 3381209082532433, 3380012082532431, 3381003082532428, 3381013082532424, 3380026082532423, 3380029082532418, 3380322082532421, 3381208082532416, 3380508082532415, 3380306082532417, 3381210082532414, 3380035082532406, 3381214082532409, 3380026082532405, 3380016082532402, 3381214082532403, 3380029082532401, 3381516082532400, 3380526082532394, 3381402082532392, 3381402082532393, 3380035082532391, 3380035082532389, 3380035082532388, 3381208082532387, 3381007082532386, 3380031082532385, 3380117082532384, 3381053082532380, 3380501082532376, 3381301082532375, 3380029082532373, 3380036082532372, 3380308082532371, 3380210082532370, 3380029082532369, 3381051082532368, 3381051082532367, 3380012082532365, 3380105082532366, 3380024082532363, 3381202082532362, 3380027082532361, 3402506082532359, 3401603082532357, 3380017082532358, 3380508082532356, 3380017082532355, 3380017082532354, 3380017082532352, 3380017082532351, 3380035082532350, 3380002082532348, 3380029082532347, 3380029082532345, 3380028082532344, 3381402082532341, 3380012082532342, 3381203082532343, 3380317082532340, 3381210082532339, 3381201082532337, 3380122082532336, 3001971082532334, 3380015082532333, 3381402082532332, 3381204082532330, 3380018082532327, 3380022082532328, 3380036082532325, 3381516082532324, 3381209082532321, 3380509082532320, 3380026082532322, 3380035082532317, 3300507082532319, 3381504082532318, 3380530082532316, 3380530082532315, 3381210082532314, 3380022082532311, 3380022082532309, 3380539082532310, 3380035082532307, 3380029082532304, 3380041082532305, 3380319082532308, 3381013082532299, 3380001082532297, 3380115082532296, 3381203082532295, 3380012082532293, 3380305082532291, 3381301082532290, 3380625082532289, 3380027082532288, 3380027082532287, 3380040082532285, 3380041082532282, 3380037082532276, 3381204082532273, 3381507082532271, 3381507082532270, 3381507082532269, 3381507082532267, 3381507082532266, 3381507082532265, 3381507082532264, 3380016082532262, 3381513082532263, 3381513082532261, 3381503082532260, 3380040082532259, 3380029082532257, 3403327082532256, 3403327082532255, 3381509082532252, 3381005082532253, 3381301082532251, 3403145082532247, 3380035082532245, 3380023082532244, 3381202082532242, 3380035082532241, 3380020082532243, 3402506082532237, 3402506082532236, 3380038082532234, 3381207082532233, 3380038082532231, 3380040082532230, 3380024082532227, 3380015082532224, 3381202082532220, 3381202082532222, 3380014082532219, 3380024082532216, 3381102082532217, 3380001082532215, 3380001082532214]
+2025-08-21 07:16:31 ERROR EmailNotificationService:48 - Failed to send success notification for OS TESTE: Cannot invoke "java.time.LocalDateTime.format(java.time.format.DateTimeFormatter)" because "dataInicio" is null
+java.lang.NullPointerException: Cannot invoke "java.time.LocalDateTime.format(java.time.format.DateTimeFormatter)" because "dataInicio" is null
+	at br.com.caesb.automation.service.EmailNotificationService.criarConteudoSucesso(EmailNotificationService.java:152) ~[classes/:?]
+	at br.com.caesb.automation.service.EmailNotificationService.enviarNotificacaoSucesso(EmailNotificationService.java:42) [classes/:?]
+	at br.com.caesb.automation.controller.CaesbController.listarOs(CaesbController.java:66) [classes/:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255) [spring-web-6.1.5.jar:6.1.5]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188) [spring-web-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:925) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:830) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) [spring-webmvc-6.1.5.jar:6.1.5]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903) [spring-webmvc-6.1.5.jar:6.1.5]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564) [tomcat-embed-core-10.1.19.jar:6.0]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) [spring-webmvc-6.1.5.jar:6.1.5]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) [tomcat-embed-core-10.1.19.jar:6.0]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:205) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) [tomcat-embed-websocket-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) [spring-web-6.1.5.jar:6.1.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) [spring-web-6.1.5.jar:6.1.5]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) [spring-web-6.1.5.jar:6.1.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) [spring-web-6.1.5.jar:6.1.5]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) [spring-web-6.1.5.jar:6.1.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) [spring-web-6.1.5.jar:6.1.5]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1744) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) [tomcat-embed-core-10.1.19.jar:10.1.19]
+	at java.base/java.lang.Thread.run(Thread.java:842) [?:?]
+2025-08-21 07:17:19 INFO  CaesbOsAutomationApplication:50 - Starting CaesbOsAutomationApplication using Java 17.0.12 with PID 32700 (D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation\target\classes started by maike in D:\Projetos\MS-CONSULTORIA\CAESB\caesb_automation)
+2025-08-21 07:17:19 INFO  CaesbOsAutomationApplication:654 - No active profile set, falling back to 1 default profile: "default"
+2025-08-21 07:17:21 INFO  TomcatWebServer:109 - Tomcat initialized with port 8080 (http)
+2025-08-21 07:17:21 INFO  Http11NioProtocol:173 - Initializing ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:17:21 INFO  StandardService:173 - Starting service [Tomcat]
+2025-08-21 07:17:21 INFO  StandardEngine:173 - Starting Servlet engine: [Apache Tomcat/10.1.19]
+2025-08-21 07:17:21 INFO  [/]:173 - Initializing Spring embedded WebApplicationContext
+2025-08-21 07:17:21 INFO  ServletWebServerApplicationContext:296 - Root WebApplicationContext: initialization completed in 1915 ms
+2025-08-21 07:17:22 INFO  Http11NioProtocol:173 - Starting ProtocolHandler ["http-nio-8080"]
+2025-08-21 07:17:22 INFO  TomcatWebServer:241 - Tomcat started on port 8080 (http) with context path ''
+2025-08-21 07:17:22 INFO  CaesbOsAutomationApplication:56 - Started CaesbOsAutomationApplication in 3.919 seconds (process running for 6.243)
+2025-08-21 07:19:07 INFO  [/]:173 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-08-21 07:19:07 INFO  DispatcherServlet:532 - Initializing Servlet 'dispatcherServlet'
+2025-08-21 07:19:07 INFO  DispatcherServlet:554 - Completed initialization in 2 ms
+2025-08-21 07:19:07 INFO  CaesbLoginService:28 - Starting login process...
+2025-08-21 07:19:13 INFO  CaesbLoginService:31 - Browser launched in headless mode.
+2025-08-21 07:19:14 INFO  CaesbLoginService:34 - Navigating to login page...
+2025-08-21 07:19:14 INFO  CaesbLoginService:37 - Filling in username and password.
+2025-08-21 07:19:15 INFO  CaesbLoginService:41 - Login form submitted.
+2025-08-21 07:19:15 INFO  CaesbLoginService:44 - Waited for page to load.
+2025-08-21 07:19:18 INFO  CaesbLoginService:47 - Navigated to OS control page.
+2025-08-21 07:19:18 INFO  CaesbLoginService:55 - Retrieved ViewState: e1s1
+2025-08-21 07:19:18 INFO  CaesbLoginService:59 - Retrieved execution parameter: e1s1
+2025-08-21 07:19:18 INFO  CaesbLoginService:61 - Retrieving cookies...
+2025-08-21 07:19:18 INFO  CaesbLoginService:67 - Cookies retrieved successfully.
+2025-08-21 07:19:18 INFO  CaesbLoginService:73 - Login process completed successfully. Returning session object.
+2025-08-21 07:19:18 INFO  CaesbOsService:50 - Iniciando processo para listar OS pendentes (250 por página).
+2025-08-21 07:20:05 INFO  CaesbOsService:155 - Encontradas 250 OS pendentes: [3402108082532616, 3380015082532610, 3381301082532609, 3380032082532608, 3380027082532607, 3381203082532606, 3381201082532604, 3381210082532601, 3381210082532600, 3381516082532599, 3381301082532595, 3380324082532593, 3380035082532591, 3380026082532588, 3380544082532587, 3380037082532586, 3381301082532585, 3381301082532584, 3381301082532583, 3380040082532582, 3380403082532580, 3380027082532579, 3001971082532577, 3300501082532575, 3380032082532574, 3380031082532573, 3381516082532571, 3381007082532570, 3381003082532568, 3380001082532567, 3380118082532566, 3380405082532564, 3001971082532563, 3380036082532562, 3380036082532561, 3380405082532559, 3381201082532560, 3402700082532558, 3380034082532557, 3381204082532556, 3380121082532555, 3381013082532553, 3380020082532554, 3381213082532552, 3380024082532549, 3402706082532548, 3380332082532547, 3381203082532546, 3380404082532545, 3381301082532543, 3381004082532542, 3380610082532540, 3380024082532539, 3380519082532536, 3380029082532535, 3380502082532530, 3380031082532526, 3381011082532523, 3380036082532521, 3380001082532517, 3380207082532514, 3380351082532512, 3380025082532511, 3380015082532509, 3380011082532501, 3380031082532496, 3381301082532499, 3381203082532495, 3381203082532493, 3380625082532492, 3381201082532489, 3381201082532488, 3380610082532483, 3380208082532484, 3381301082532482, 3381402082532481, 3381201082532477, 3380042082532476, 3380015082532475, 3380042082532473, 3380001082532472, 3380001082532471, 3380518082532470, 3402506082532469, 3380001082532465, 3380001082532464, 3380319082532463, 3380311082532462, 3380525082532461, 3380038082532460, 3381202082532457, 3380038082532458, 3380038082532459, 3380038082532456, 3381052082532455, 3380107082532454, 3380407082532452, 3381204082532451, 3381210082532449, 3380029082532448, 3380026082532447, 3380038082532445, 3380038082532444, 3381514082532442, 3380038082532438, 3380406082532439, 3403327082532437, 3380040082532436, 3381005082532435, 3300506082532434, 3381209082532433, 3380012082532431, 3381003082532428, 3381013082532424, 3380026082532423, 3380029082532418, 3380322082532421, 3381208082532416, 3380508082532415, 3380306082532417, 3381210082532414, 3380035082532406, 3381214082532409, 3380026082532405, 3380016082532402, 3381214082532403, 3380029082532401, 3381516082532400, 3380526082532394, 3381402082532392, 3381402082532393, 3380035082532391, 3380035082532389, 3380035082532388, 3381208082532387, 3381007082532386, 3380031082532385, 3380117082532384, 3381053082532380, 3380501082532376, 3381301082532375, 3380029082532373, 3380036082532372, 3380308082532371, 3380210082532370, 3380029082532369, 3381051082532368, 3381051082532367, 3380012082532365, 3380105082532366, 3380024082532363, 3381202082532362, 3380027082532361, 3402506082532359, 3401603082532357, 3380017082532358, 3380508082532356, 3380017082532355, 3380017082532354, 3380017082532352, 3380017082532351, 3380035082532350, 3380002082532348, 3380029082532347, 3380029082532345, 3380028082532344, 3381402082532341, 3380012082532342, 3381203082532343, 3380317082532340, 3381210082532339, 3381201082532337, 3380122082532336, 3001971082532334, 3380015082532333, 3381402082532332, 3381204082532330, 3380018082532327, 3380022082532328, 3380036082532325, 3381516082532324, 3381209082532321, 3380509082532320, 3380026082532322, 3380035082532317, 3300507082532319, 3381504082532318, 3380530082532316, 3380530082532315, 3381210082532314, 3380022082532311, 3380022082532309, 3380539082532310, 3380035082532307, 3380029082532304, 3380041082532305, 3380319082532308, 3381013082532299, 3380001082532297, 3380115082532296, 3381203082532295, 3380012082532293, 3380305082532291, 3381301082532290, 3380625082532289, 3380027082532288, 3380027082532287, 3380040082532285, 3380041082532282, 3380037082532276, 3381204082532273, 3381507082532271, 3381507082532270, 3381507082532269, 3381507082532267, 3381507082532266, 3381507082532265, 3381507082532264, 3380016082532262, 3381513082532263, 3381513082532261, 3381503082532260, 3380040082532259, 3380029082532257, 3403327082532256, 3403327082532255, 3381509082532252, 3381005082532253, 3381301082532251, 3403145082532247, 3380035082532245, 3380023082532244, 3381202082532242, 3380035082532241, 3380020082532243, 3402506082532237, 3402506082532236, 3380038082532234, 3381207082532233, 3380038082532231, 3380040082532230, 3380024082532227, 3380015082532224, 3381202082532220, 3381202082532222, 3380014082532219, 3380024082532216, 3381102082532217, 3380001082532215, 3380001082532214]
+2025-08-21 07:21:04 INFO  EmailNotificationService:129 - Email sent successfully to 1 recipients. Status: 202
+2025-08-21 07:21:04 INFO  EmailNotificationService:45 - Success notification sent for OS TESTE

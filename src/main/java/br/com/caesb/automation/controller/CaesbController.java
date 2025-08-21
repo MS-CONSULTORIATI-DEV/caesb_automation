@@ -3,12 +3,10 @@ package br.com.caesb.automation.controller;
 import br.com.caesb.automation.config.CaesbSession;
 import br.com.caesb.automation.dto.BaixaResultado;
 import br.com.caesb.automation.service.*;
-import jakarta.annotation.PostConstruct;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +28,7 @@ public class CaesbController {
     private final CaesbLoginService  loginService;
     private final CaesbOsService     osService;
     private final CaesbBaixaService  baixaService;
+    private final EmailNotificationService emailNotificationService;
 
     private final BaixaControladorExecucao controle;
 
@@ -46,10 +45,12 @@ public class CaesbController {
     public CaesbController(CaesbLoginService loginService,
                            CaesbOsService osService,
                            CaesbBaixaService baixaService,
+                           EmailNotificationService emailNotificationService,
                            BaixaControladorExecucao controle) {
         this.loginService  = loginService;
         this.osService     = osService;
         this.baixaService  = baixaService;
+        this.emailNotificationService = emailNotificationService;
         this.controle      = controle;
     }
 
@@ -60,6 +61,14 @@ public class CaesbController {
     public ResponseEntity<List<String>> listarOs() throws Exception {
         CaesbSession session = loginService.login();
         List<String> numeros = osService.listarOs(session);
+
+        try {
+            emailNotificationService.enviarNotificacaoSucesso("TESTE", LocalDateTime.now(), LocalDateTime.now());
+        } catch (Exception emailError) {
+            log.warn("[{}] Failed to send summary notification: {}", numeros, emailError.getMessage());
+        }
+
+
         return ResponseEntity.ok(numeros);
     }
 
@@ -118,6 +127,7 @@ public class CaesbController {
        ----------------------------------------------------------- */
     private void executarBaixa(String jobId) {
         log.info("[{}] processo de baixa iniciado", jobId);
+        LocalDateTime inicioProcesso = LocalDateTime.now();
 
         List<BaixaResultado> resultados = new CopyOnWriteArrayList<>();
 
@@ -148,6 +158,16 @@ public class CaesbController {
                         log.error("[{}] Falha inesperada na OS {}", jobId, os, e);
                         resultados.add(new BaixaResultado(os, false,
                                 List.of("Falha inesperada: " + e.getMessage())));
+                        
+                        // Enviar notificação de erro crítico que parou o bot
+                        try {
+                            emailNotificationService.enviarNotificacaoErro(os, 
+                                "Falha inesperada que parou o bot: " + e.getMessage(), inicioProcesso);
+                        } catch (Exception emailError) {
+                            log.warn("[{}] Failed to send critical error notification for OS {}: {}", 
+                                jobId, os, emailError.getMessage());
+                        }
+                        
                         controle.parar();
                     }
                 }
@@ -156,9 +176,28 @@ public class CaesbController {
 
         } catch (Exception geral) {
             log.error("[{}] erro geral no processo", jobId, geral);
+            
+            // Enviar notificação de erro geral
+            try {
+                emailNotificationService.enviarNotificacaoErro(null, 
+                    "Erro geral no processo: " + geral.getMessage(), inicioProcesso);
+            } catch (Exception emailError) {
+                log.warn("[{}] Failed to send general error notification: {}", jobId, emailError.getMessage());
+            }
+            
         } finally {
             controle.parar();       // garante reset
+            LocalDateTime fimProcesso = LocalDateTime.now();
             log.info("[{}] processo encerrado – {} resultados", jobId, resultados.size());
+            
+            // Enviar resumo se houver resultados
+            if (!resultados.isEmpty()) {
+                try {
+                    emailNotificationService.enviarNotificacaoResumo(resultados, inicioProcesso, fimProcesso);
+                } catch (Exception emailError) {
+                    log.warn("[{}] Failed to send summary notification: {}", jobId, emailError.getMessage());
+                }
+            }
         }
     }
 }
