@@ -62,6 +62,12 @@ public class CaesbController {
         CaesbSession session = loginService.login();
         List<String> numeros = osService.listarOs(session);
 
+      /*  try {
+            emailNotificationService.enviarNotificacaoSucesso("TESTE", LocalDateTime.now(), LocalDateTime.now());
+        } catch (Exception e) {
+            log.error("Erro ao enviar notificação de resumo: {}", e.getMessage());
+        }*/
+
         return ResponseEntity.ok(numeros);
     }
 
