@@ -99,8 +99,23 @@ public class CaesbController {
             log.warn("Tentativa de parar processo que não está em execução.");
             return ResponseEntity.status(409).body("Nenhum processo em execução.");
         }
+
+        // Capturar informações antes de parar
+        String osAtual = controle.getOsAtual();
+        LocalDateTime inicioProcesso = controle.getInicio();
+        LocalDateTime agora = LocalDateTime.now();
+
         controle.parar();
         log.info("Parada do processo solicitada com sucesso.");
+
+        // Enviar notificação de parada manual
+        try {
+            emailNotificationService.enviarNotificacaoParadaManual(osAtual, inicioProcesso, agora);
+            log.info("Notificação de parada manual enviada com sucesso.");
+        } catch (Exception emailError) {
+            log.warn("Falhou ao enviar notificação de parada manual: {}", emailError.getMessage());
+        }
+
         return ResponseEntity.ok("Parada solicitada.");
     }
 

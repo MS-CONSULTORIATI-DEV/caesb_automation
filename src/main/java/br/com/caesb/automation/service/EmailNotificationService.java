@@ -94,6 +94,27 @@ public class EmailNotificationService {
         }
     }
 
+    /**
+     * Envia notificação quando o processo de baixa é parado manualmente
+     */
+    public void enviarNotificacaoParadaManual(String osAtual, LocalDateTime dataInicio, LocalDateTime dataParada) {
+        if (!emailProperties.isEnabled()) {
+            logger.info("Email notifications are disabled. Skipping manual stop notification");
+            return;
+        }
+
+        try {
+            String assunto = "🛑 Processo de Baixa Parado Manualmente";
+            String conteudo = criarConteudoParadaManual(osAtual, dataInicio, dataParada);
+
+            enviarEmail(assunto, conteudo);
+            logger.info("Manual stop notification sent");
+
+        } catch (Exception e) {
+            logger.error("Failed to send manual stop notification: {}", e.getMessage(), e);
+        }
+    }
+
     private void enviarEmail(String assunto, String conteudo) throws IOException {
         List<String> allRecipients = emailProperties.getAllRecipients();
         
@@ -240,6 +261,32 @@ public class EmailNotificationService {
             html.append("</div>");
         }
         
+        html.append("<p style='color: #6c757d; font-size: 12px; margin-top: 20px;'>");
+        html.append("Este email foi enviado automaticamente pelo sistema de automação CAESB.<br>");
+        html.append("Data/Hora: ").append(LocalDateTime.now().format(FORMATTER));
+        html.append("</p>");
+        html.append("</div></body></html>");
+        return html.toString();
+    }
+
+    private String criarConteudoParadaManual(String osAtual, LocalDateTime dataInicio, LocalDateTime dataParada) {
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html>");
+        html.append("<html><head><meta charset='UTF-8'></head><body>");
+        html.append("<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>");
+        html.append("<h2 style='color: #ffc107;'>🛑 Processo de Baixa Interrompido Manualmente</h2>");
+        html.append("<div style='background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0;'>");
+        html.append("<h3 style='margin-top: 0; color: #856404;'>⏹️ Parada Solicitada pelo Usuário</h3>");
+        html.append("<p><strong>OS sendo processada:</strong> ").append(osAtual != null ? osAtual : "Nenhuma OS ativa").append("</p>");
+        html.append("<p><strong>Início do processo:</strong> ").append(dataInicio != null ? dataInicio.format(FORMATTER) : "N/A").append("</p>");
+        html.append("<p><strong>Hora da parada:</strong> ").append(dataParada.format(FORMATTER)).append("</p>");
+        html.append("<p><strong>Status:</strong> <span style='color: #ffc107; font-weight: bold;'>INTERROMPIDO MANUALMENTE</span></p>");
+        html.append("</div>");
+        html.append("<div style='background-color: #cce5ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 5px; margin: 15px 0;'>");
+        html.append("<h4 style='margin-top: 0; color: #004085;'>ℹ️ Informações:</h4>");
+        html.append("<p>O processo de automação foi interrompido manualmente através da interface ou API.</p>");
+        html.append("<p>O sistema foi parado de forma controlada e segura.</p>");
+        html.append("</div>");
         html.append("<p style='color: #6c757d; font-size: 12px; margin-top: 20px;'>");
         html.append("Este email foi enviado automaticamente pelo sistema de automação CAESB.<br>");
         html.append("Data/Hora: ").append(LocalDateTime.now().format(FORMATTER));

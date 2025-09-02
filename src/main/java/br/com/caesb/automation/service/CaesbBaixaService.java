@@ -221,11 +221,11 @@ public class CaesbBaixaService {
             }
             
             // Enviar notificação de erro
-            try {
+           /* try {
                 emailNotificationService.enviarNotificacaoErro(os, "Playwright error: " + e.getMessage(), inicioExecucao);
             } catch (Exception emailError) {
                 logger.warn("Failed to send error notification for OS {}: {}", os, emailError.getMessage());
-            }
+            }*/
             
             return new BaixaResultado(os, false, List.of("Playwright error: " + e.getMessage()));
         } catch (Exception e) {
