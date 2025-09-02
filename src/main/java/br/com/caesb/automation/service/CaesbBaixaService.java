@@ -211,13 +211,7 @@ public class CaesbBaixaService {
             logger.info("OS {} processed successfully", os);
 //            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/success-" + os + ".png")));
             
-            // Enviar notificação de sucesso
-            try {
-                LocalDateTime fimExecucao = LocalDateTime.now();
-                emailNotificationService.enviarNotificacaoSucesso(os, inicioExecucao, fimExecucao);
-            } catch (Exception e) {
-                logger.warn("Failed to send success notification for OS {}: {}", os, e.getMessage());
-            }
+          
             
             return new BaixaResultado(os, true, List.of("OK"));
         } catch (PlaywrightException e) {
