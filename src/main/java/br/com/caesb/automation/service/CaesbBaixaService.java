@@ -29,7 +29,7 @@ public class CaesbBaixaService {
     private static final int MAX_RETRIES = 3;
     private static final int RETRY_DELAY_MS = 2000;
     private static final int ACTION_TIMEOUT_MS = 5000;
-    private static final boolean HIDE_BROWSER = true;
+    private static final boolean HIDE_BROWSER = false;
 
 
     public CaesbBaixaService() {
@@ -166,7 +166,7 @@ public class CaesbBaixaService {
 
             // Step 3: Click Salvar
             logger.info("Clicking Salvar button");
-            page.locator("#form1\\:j_idt1115").click(new Locator.ClickOptions().setForce(true));
+            page.locator("#form1\\:j_idt1116").click(new Locator.ClickOptions().setForce(true));
 
             // Check for validation errors
             if (page.locator(".ui-linha-form-messages").isVisible()) {
