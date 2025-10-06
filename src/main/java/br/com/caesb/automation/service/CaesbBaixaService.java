@@ -29,7 +29,108 @@ public class CaesbBaixaService {
     private static final int MAX_RETRIES = 3;
     private static final int RETRY_DELAY_MS = 2000;
     private static final int ACTION_TIMEOUT_MS = 5000;
-    private static final boolean HIDE_BROWSER = false;
+    private static final boolean HIDE_BROWSER = true;
+    
+    /**
+     * Encontra um botão dinamicamente por múltiplas estratégias (texto, valor, tipo).
+     * Isso evita dependência de IDs JSF que mudam quando elementos são adicionados.
+     */
+    private Locator findButtonDynamically(Page page, String... searchTexts) {
+        for (String searchText : searchTexts) {
+            try {
+                // Estratégia 1: Buscar por texto exato do botão
+                Locator byText = page.locator(String.format("button:has-text('%s'), input[type='button'][value*='%s'], input[type='submit'][value*='%s']", 
+                    searchText, searchText, searchText));
+                if (byText.count() > 0) {
+                    logger.info("Botão encontrado por texto: '{}'", searchText);
+                    return byText.first();
+                }
+                
+                // Estratégia 2: Buscar por texto dentro do form específico
+                Locator inForm = page.locator("#form1").locator(String.format("button:has-text('%s')", searchText));
+                if (inForm.count() > 0) {
+                    logger.info("Botão encontrado dentro do form1 por texto: '{}'", searchText);
+                    return inForm.first();
+                }
+            } catch (Exception e) {
+                logger.debug("Tentativa de encontrar botão por '{}' falhou: {}", searchText, e.getMessage());
+            }
+        }
+        throw new RuntimeException("Botão não encontrado com os textos: " + String.join(", ", searchTexts));
+    }
+    
+    /**
+     * Encontra um grupo de radio buttons dinamicamente pelo label associado.
+     * Busca o label pelo texto e depois encontra o grupo de radio relacionado.
+     */
+    private String findRadioGroupByLabel(Page page, String labelText) {
+        try {
+            // Buscar todos os grupos de radio buttons no formulário
+            Locator radioGroups = page.locator("#form1 .ui-radiobutton");
+            
+            // Se temos um label próximo, procurar o grupo de radio associado
+            for (int i = 0; i < radioGroups.count(); i++) {
+                Locator group = radioGroups.nth(i);
+                String parentText = group.locator("xpath=ancestor::tr[1]").innerText();
+                if (parentText.toLowerCase().contains(labelText.toLowerCase())) {
+                    // Extrair o ID do grupo
+                    String radioId = group.getAttribute("id");
+                    if (radioId != null && radioId.contains(":")) {
+                        String groupId = radioId.substring(0, radioId.lastIndexOf(":"));
+                        logger.info("Grupo de radio encontrado por label '{}': {}", labelText, groupId);
+                        return groupId.replace("form1:", "");
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.debug("Erro ao buscar grupo de radio por label '{}': {}", labelText, e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Clica em um radio button dinamicamente, tentando múltiplas estratégias.
+     */
+    private void clickRadioDynamically(Page page, String os, String labelText, int optionIndex, String logDescription) {
+        try {
+            // Estratégia 1: Tentar com o label conhecido
+            String groupId = findRadioGroupByLabel(page, labelText);
+            if (groupId != null) {
+                clickRadioByIndex(page, os, "form1:" + groupId, optionIndex, logDescription);
+                return;
+            }
+            
+            // Estratégia 2: Buscar pela estrutura aninhada - para casos onde radio buttons estão em tabela filha
+            String xpathNestedSelector = String.format(
+                "//th[contains(text(), '%s')]/..//table//tr/td[position()=%d]//div[contains(@class, 'ui-radiobutton-box')]",
+                labelText, optionIndex + 1
+            );
+            Locator radioBoxNested = page.locator(xpathNestedSelector);
+            if (radioBoxNested.count() > 0) {
+                radioBoxNested.first().click(new Locator.ClickOptions().setTimeout(ACTION_TIMEOUT_MS));
+                logger.info("Clicado '{}' usando XPath nested para OS {}", logDescription, os);
+                return;
+            }
+            
+            // Estratégia 3: Buscar pela estrutura - encontrar a linha que contém o texto
+            String xpathSelector = String.format(
+                "//tr[contains(., '%s')]//td[position()=%d]//div[contains(@class, 'ui-radiobutton-box')]",
+                labelText, optionIndex + 1
+            );
+            Locator radioBox = page.locator(xpathSelector);
+            if (radioBox.count() > 0) {
+                radioBox.first().click(new Locator.ClickOptions().setTimeout(ACTION_TIMEOUT_MS));
+                logger.info("Clicado '{}' usando XPath para OS {}", logDescription, os);
+                return;
+            }
+            
+            logger.warn("Não foi possível encontrar radio button para: {}", logDescription);
+            
+        } catch (Exception e) {
+            logger.error("Erro ao clicar no radio '{}' (OS {}): {}", logDescription, os, e.getMessage(), e);
+        }
+    }
 
 
     public CaesbBaixaService() {
@@ -119,14 +220,9 @@ public class CaesbBaixaService {
             // Step 2: Fill form fields
             logger.info("Filling form fields for OS {}", os);
 
-            // Helper method to check radio button safely
-            clickRadioByIndex(page, os, "form1:j_idt426",  1,"Deseja refaturar conta: Não");
-            clickRadioByIndex(page, os, "form1:j_idt615", 0, "Executado: Sim");
-
-//            checkRadioButton(page, os, "#form1\\:j_idt601\\:1", "input[name='form1:j_idt601'][value='false']", "Havia vazamento ou extravasamento: Não");
-//            checkRadioButton(page, os, "#form1\\:j_idt612\\:0", "input[name='form1:j_idt612'][value='true']", "Executado: Sim");
-//            checkRadioButton(page, os, "#form1\\:j_idt754\\:0", "input[name='form1:j_idt754'][value='true']", "Notificação em Mãos: Sim");
-//            checkRadioButton(page, os, "#form1\\:j_idt760\\:1", "input[name='form1:j_idt760'][value='false']", "Acesso ao Hidrômetro: Não");
+            // Usando seletores dinâmicos que não dependem de IDs JSF mutáveis
+            clickRadioDynamically(page, os, "Deseja refaturar conta", 1, "Deseja refaturar conta: Não");
+            clickRadioDynamically(page, os, "Executado", 0, "Executado: Sim");
 
             // Data Início de Execução: Current date at 08:00
             String startDateTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"))
@@ -151,9 +247,10 @@ public class CaesbBaixaService {
                 logger.info("Data Fim field not found for OS {}", os);
             }
 
-            clickRadioByIndex(page, os, "form1:j_idt604", 1, "Havia vazamento ou extravasamento: Não");
-//            clickRadioByIndex(page, os, "form1:j_idt754", 0, "Notificação em Mãos: Sim");
-//            clickRadioByIndex(page, os, "form1:j_idt760", 1, "Acesso ao Hidrômetro: Não");
+            clickRadioDynamically(page, os, "vazamento", 1, "Havia vazamento ou extravasamento: Não");
+            // Descomente as linhas abaixo se necessário
+            // clickRadioDynamically(page, os, "Notificação", 0, "Notificação em Mãos: Sim");
+            // clickRadioDynamically(page, os, "Acesso ao Hidrômetro", 1, "Acesso ao Hidrômetro: Não");
 
             String hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"))
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -164,9 +261,10 @@ public class CaesbBaixaService {
             preencherTextarea(page, "providenciaBaixa",
                     "Usuário ciente dos débitos.");
 
-            // Step 3: Click Salvar
+            // Step 3: Click Salvar - Usando busca dinâmica por texto do botão
             logger.info("Clicking Salvar button");
-            page.locator("#form1\\:j_idt1116").click(new Locator.ClickOptions().setForce(true));
+            Locator salvarButton = findButtonDynamically(page, "Salvar", "salvar", "SALVAR");
+            salvarButton.click(new Locator.ClickOptions().setForce(true));
 
             // Check for validation errors
             if (page.locator(".ui-linha-form-messages").isVisible()) {
