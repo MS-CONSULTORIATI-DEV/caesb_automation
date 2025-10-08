@@ -203,7 +203,7 @@ public class CaesbBaixaService {
             }
 
             // Check for errors after search
-            if (page.locator(".ui-linha-form-messages").isVisible()) {
+            if (page.locator(".ui-linha-form-messages").count() > 0 && page.locator(".ui-linha-form-messages").first().isVisible()) {
                 List<String> errors = extractErrorMessages(page);
                 logger.info("Search failed for OS {}: {}", os, errors);
 //                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/search-error-" + os + ".png")));
@@ -267,7 +267,7 @@ public class CaesbBaixaService {
             salvarButton.click(new Locator.ClickOptions().setForce(true));
 
             // Check for validation errors
-            if (page.locator(".ui-linha-form-messages").isVisible()) {
+            if (page.locator(".ui-linha-form-messages").count() > 0 && page.locator(".ui-linha-form-messages").first().isVisible()) {
                 List<String> errors = extractErrorMessages(page);
                 logger.info("Validation failed for OS {}: {}", os, errors);
                 return new BaixaResultado(os, false, errors);
