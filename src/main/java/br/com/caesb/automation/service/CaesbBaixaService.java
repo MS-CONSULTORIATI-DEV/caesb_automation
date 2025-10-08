@@ -220,10 +220,34 @@ public class CaesbBaixaService {
             // Step 2: Fill form fields
             logger.info("Filling form fields for OS {}", os);
 
-            // Usando seletores dinâmicos que não dependem de IDs JSF mutáveis
+            // ========== FASE 1: CLICAR EM TODOS OS RADIO BUTTONS PRIMEIRO ==========
+            // Radio buttons disparam AJAX que pode resetar campos. Clicamos todos primeiro!
+            logger.info("Fase 1: Clicando em todos os radio buttons (que disparam AJAX)...");
+            
             clickRadioDynamically(page, os, "Deseja refaturar conta", 1, "Deseja refaturar conta: Não");
+            logger.info("Aguardando após 'Deseja refaturar conta'...");
+            Thread.sleep(500);
+            
             clickRadioDynamically(page, os, "Executado", 0, "Executado: Sim");
+            logger.info("Aguardando após 'Executado'...");
+            Thread.sleep(500);
+            
+            clickRadioDynamically(page, os, "vazamento", 1, "Havia vazamento ou extravasamento: Não");
+            logger.info("Aguardando após 'vazamento'...");
+            Thread.sleep(500);
+            
+            // Descomente as linhas abaixo se necessário
+            // clickRadioDynamically(page, os, "Notificação", 0, "Notificação em Mãos: Sim");
+            // clickRadioDynamically(page, os, "Acesso ao Hidrômetro", 1, "Acesso ao Hidrômetro: Não");
 
+            // Aguardar que TODO o AJAX dos radio buttons complete antes de preencher campos
+            logger.info("Aguardando AJAX completar após todos os radio buttons...");
+            page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(10000));
+            Thread.sleep(2000); // Pausa adicional para garantir que JSF processou tudo
+
+            // ========== FASE 2: PREENCHER CAMPOS DE DATA E TEXTO ==========
+            logger.info("Fase 2: Preenchendo datas e campos de texto...");
+            
             // Data Início de Execução: Current date at 08:00
             String startDateTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"))
                     .withHour(8).withMinute(0).withSecond(0).withNano(0)
@@ -241,16 +265,11 @@ public class CaesbBaixaService {
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
             if (page.locator("#form1\\:dataFimExecucao_input").isVisible()) {
                 page.locator("#form1\\:dataFimExecucao_input").evaluate("el => el.removeAttribute('readonly')");
-                page.locator("#form1\\:dataFimExecucao_input").fill(startDateTime);
+                page.locator("#form1\\:dataFimExecucao_input").fill(endDateTime); // CORRIGIDO: era startDateTime
                 logger.info("Set dataFimExecucao to {}", endDateTime);
             } else {
                 logger.info("Data Fim field not found for OS {}", os);
             }
-
-            clickRadioDynamically(page, os, "vazamento", 1, "Havia vazamento ou extravasamento: Não");
-            // Descomente as linhas abaixo se necessário
-            // clickRadioDynamically(page, os, "Notificação", 0, "Notificação em Mãos: Sim");
-            // clickRadioDynamically(page, os, "Acesso ao Hidrômetro", 1, "Acesso ao Hidrômetro: Não");
 
             String hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"))
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -260,6 +279,10 @@ public class CaesbBaixaService {
 
             preencherTextarea(page, "providenciaBaixa",
                     "Usuário ciente dos débitos.");
+
+            // Aguardar um pouco antes de salvar para garantir que JSF processou todos os campos
+            logger.info("Aguardando antes de clicar em Salvar...");
+            Thread.sleep(1500);
 
             // Step 3: Click Salvar - Usando busca dinâmica por texto do botão
             logger.info("Clicking Salvar button");
