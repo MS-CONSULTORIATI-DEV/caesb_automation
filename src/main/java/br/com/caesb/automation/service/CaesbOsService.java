@@ -65,15 +65,23 @@ public class CaesbOsService {
 
         log.debug("GET inicial => status {}, URI redirecionada: {}",
                 r1.statusCode(), r1.uri());
+        
+        // Debug adicional
+        log.debug("Response body (primeiros 500 chars): {}", 
+                r1.body().substring(0, Math.min(500, r1.body().length())));
 
-        /* Captura “execution” (pode vir na própria URI ou no form) */
+        /* Captura "execution" (pode vir na própria URI ou no form) */
         String execution = getExecutionFromUri(r1.uri());
         if (execution == null) {
+            log.warn("Execution não encontrado na URI, tentando extrair do body...");
             execution = group(r1.body(),
                     "(?s)action=\"[^\"]*execution=([^\"]+)\"");
         }
         if (execution == null) {
-            throw new IOException("Não foi possível determinar o parâmetro 'execution'.");
+            log.error("Falha ao extrair 'execution'. Status: {}, URI: {}, Body length: {}", 
+                    r1.statusCode(), r1.uri(), r1.body().length());
+            throw new IOException("Não foi possível determinar o parâmetro 'execution'. " +
+                    "Verifique se a sessão está válida e se o servidor está respondendo corretamente.");
         }
 
         /* Captura javax.faces.ViewState */

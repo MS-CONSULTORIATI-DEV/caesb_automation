@@ -175,6 +175,23 @@ public class CaesbBaixaService {
 
             // Step 1: Search for OS
             logger.info("Searching for OS {}", os);
+            
+            // Wait for the search form to be ready
+            try {
+                logger.debug("Waiting for search form to be available...");
+                Locator searchInput = page.locator("#formPesquisa\\:inptOs");
+                searchInput.waitFor(new Locator.WaitForOptions().setTimeout(30000));
+                
+                // Double check it's visible and enabled
+                if (!searchInput.isVisible() || !searchInput.isEnabled()) {
+                    throw new TimeoutError("Search form is not visible or enabled");
+                }
+            } catch (TimeoutError e) {
+                logger.error("Search form not available for OS {}. Page URL: {}", os, page.url());
+//                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/form-not-available-" + os + ".png")));
+                return new BaixaResultado(os, false, List.of("Search form not available - page may not have loaded correctly"));
+            }
+            
             page.locator("#formPesquisa\\:inptOs").fill(os);
             page.locator("#formPesquisa\\:pesquisarOrdemServico").click();
 
@@ -186,8 +203,25 @@ public class CaesbBaixaService {
                 // Retry search
                 for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
                     logger.info("Retry attempt {} for OS {}", attempt, os);
-                    page.locator("#formPesquisa\\:inptOs").fill(os);
-                    page.locator("#formPesquisa\\:pesquisarOrdemServico").click();
+                    try {
+                        // Ensure form is still available before retry
+                        Locator retrySearchInput = page.locator("#formPesquisa\\:inptOs");
+                        retrySearchInput.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+                        
+                        if (!retrySearchInput.isVisible() || !retrySearchInput.isEnabled()) {
+                            throw new TimeoutError("Search form not visible/enabled on retry");
+                        }
+                        
+                        retrySearchInput.fill(os);
+                        page.locator("#formPesquisa\\:pesquisarOrdemServico").click();
+                    } catch (TimeoutError formError) {
+                        logger.warn("Search form disappeared during retry {} for OS {}", attempt, os);
+                        if (attempt == MAX_RETRIES) {
+                            return new BaixaResultado(os, false, List.of("Search form not available during retries"));
+                        }
+                        Thread.sleep(RETRY_DELAY_MS);
+                        continue;
+                    }
                     try {
                         page.waitForSelector("#form1, .ui-linha-form-messages", new Page.WaitForSelectorOptions().setTimeout(15000));
                         break;
