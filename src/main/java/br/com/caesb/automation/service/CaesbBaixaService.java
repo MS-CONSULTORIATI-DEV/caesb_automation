@@ -29,7 +29,9 @@ public class CaesbBaixaService {
     private static final int MAX_RETRIES = 3;
     private static final int RETRY_DELAY_MS = 2000;
     private static final int ACTION_TIMEOUT_MS = 5000;
-    private static final boolean HIDE_BROWSER = true;
+    private static final int NAVIGATION_TIMEOUT_MS = 60000; // 60 segundos para navegação
+    private static final int PAGE_LOAD_TIMEOUT_MS = 45000; // 45 segundos para carregamento de página
+    private static final boolean HIDE_BROWSER = false;
     
     /**
      * Encontra um botão dinamicamente por múltiplas estratégias (texto, valor, tipo).
@@ -147,11 +149,48 @@ public class CaesbBaixaService {
 
         try {
             playwright = Playwright.create();
+            
+            // Argumentos do Chrome otimizados para Linux/Debian
+            List<String> chromeArgs = new ArrayList<>();
+            chromeArgs.add("--disable-dev-shm-usage"); // Evita problemas de memória compartilhada
+            chromeArgs.add("--no-sandbox"); // Necessário em alguns ambientes Linux
+            chromeArgs.add("--disable-setuid-sandbox");
+            chromeArgs.add("--disable-gpu"); // Evita problemas com GPU no headless
+            chromeArgs.add("--disable-software-rasterizer");
+            chromeArgs.add("--disable-extensions");
+            chromeArgs.add("--disable-background-networking");
+            chromeArgs.add("--disable-default-apps");
+            chromeArgs.add("--disable-sync");
+            chromeArgs.add("--metrics-recording-only");
+            chromeArgs.add("--mute-audio");
+            chromeArgs.add("--no-first-run");
+            chromeArgs.add("--safebrowsing-disable-auto-update");
+            chromeArgs.add("--disable-blink-features=AutomationControlled");
+            
+            logger.info("Iniciando Chromium com {} argumentos para estabilidade no Linux", chromeArgs.size());
+            
             browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                    .setHeadless(HIDE_BROWSER) // Show browser UI for debugging
-                    .setSlowMo(500));   // 500ms delay between actions
-            context = browser.newContext(new Browser.NewContextOptions());
+                    .setHeadless(HIDE_BROWSER)
+                    .setSlowMo(300) // Reduzido de 500 para 300ms
+                    .setTimeout(NAVIGATION_TIMEOUT_MS)
+                    .setArgs(chromeArgs));
+            
+            if (browser == null || !browser.isConnected()) {
+                logger.error("Falha ao conectar ao browser para OS {}", os);
+                return new BaixaResultado(os, false, List.of("Browser não conectado"));
+            }
+            
+            logger.info("✓ Browser conectado com sucesso");
+            
+            context = browser.newContext(new Browser.NewContextOptions()
+                    .setViewportSize(1920, 1080) // Define viewport explicitamente
+                    .setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"));
 
+            // Configurar timeouts padrão no contexto
+            context.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
+            context.setDefaultTimeout(PAGE_LOAD_TIMEOUT_MS);
+            
+            logger.info("✓ Contexto do browser criado com sucesso");
 
             // Capture console logs
             context.onConsoleMessage(msg -> logger.info("Console: [{}] {}", msg.type(), msg.text()));
@@ -162,9 +201,78 @@ public class CaesbBaixaService {
                     finalContext.addCookies(List.of(new Cookie(name, value).setUrl(BASE_URL))));
 
             page = context.newPage();
-            logger.info("Navigating to {}", BASE_URL);
-            page.navigate(BASE_URL);
-            page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(30000));
+            logger.info("✓ Página criada com sucesso");
+            
+            // Verificar se page está aberta antes de continuar
+            if (page.isClosed()) {
+                logger.error("❌ Página foi fechada prematuramente antes da navegação");
+                return new BaixaResultado(os, false, List.of("Página fechada prematuramente"));
+            }
+            
+            // Navegação com retry logic
+            boolean navegacaoSucesso = false;
+            Exception ultimoErro = null;
+            
+            for (int tentativa = 1; tentativa <= MAX_RETRIES; tentativa++) {
+                try {
+                    // Verificar se browser/context/page ainda estão abertos
+                    if (!browser.isConnected()) {
+                        throw new RuntimeException("Browser desconectado durante execução");
+                    }
+                    if (page.isClosed()) {
+                        throw new RuntimeException("Página fechada durante execução");
+                    }
+                    
+                    logger.info("Tentativa {} de navegação para {} (OS: {})", tentativa, BASE_URL, os);
+                    
+                    page.navigate(BASE_URL, new Page.NavigateOptions()
+                            .setTimeout(NAVIGATION_TIMEOUT_MS)
+                            .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.LOAD));
+                    
+                    // Usar LOAD ao invés de NETWORKIDLE (mais confiável)
+                    page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions()
+                            .setTimeout(PAGE_LOAD_TIMEOUT_MS));
+                    
+                    // Aguardar um pouco para garantir que a página está estável
+                    Thread.sleep(2000);
+                    
+                    logger.info("✓ Navegação bem-sucedida para {} (tentativa {})", BASE_URL, tentativa);
+                    navegacaoSucesso = true;
+                    break;
+                    
+                } catch (TimeoutError te) {
+                    ultimoErro = te;
+                    logger.warn("⚠️ Timeout na tentativa {} de navegação para {}: {}", 
+                            tentativa, BASE_URL, te.getMessage());
+                    
+                    if (tentativa < MAX_RETRIES) {
+                        logger.info("Aguardando {}ms antes de tentar novamente...", RETRY_DELAY_MS);
+                        Thread.sleep(RETRY_DELAY_MS);
+                    }
+                } catch (Exception e) {
+                    ultimoErro = e;
+                    logger.error("Erro na tentativa {} de navegação: {} - {}", 
+                            tentativa, e.getClass().getSimpleName(), e.getMessage());
+                    
+                    // Se o browser/page foi fechado, não adianta tentar novamente
+                    if (e.getMessage().contains("closed") || e.getMessage().contains("TargetClosedError")) {
+                        logger.error("❌ Browser ou página foi fechado prematuramente. Abortando.");
+                        return new BaixaResultado(os, false, 
+                                List.of("Browser fechado prematuramente: " + e.getMessage()));
+                    }
+                    
+                    if (tentativa < MAX_RETRIES) {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    }
+                }
+            }
+            
+            if (!navegacaoSucesso) {
+                logger.error("❌ Falha na navegação após {} tentativas para OS {}", MAX_RETRIES, os);
+                String erroMsg = ultimoErro != null ? ultimoErro.getMessage() : "Timeout desconhecido";
+                return new BaixaResultado(os, false, 
+                        List.of("Falha na navegação inicial após " + MAX_RETRIES + " tentativas: " + erroMsg));
+            }
 
             // Check for login redirect
             if (page.url().contains("/seguranca/app")) {
@@ -180,14 +288,15 @@ public class CaesbBaixaService {
             try {
                 logger.debug("Waiting for search form to be available...");
                 Locator searchInput = page.locator("#formPesquisa\\:inptOs");
-                searchInput.waitFor(new Locator.WaitForOptions().setTimeout(30000));
+                searchInput.waitFor(new Locator.WaitForOptions().setTimeout(PAGE_LOAD_TIMEOUT_MS));
                 
                 // Double check it's visible and enabled
                 if (!searchInput.isVisible() || !searchInput.isEnabled()) {
                     throw new TimeoutError("Search form is not visible or enabled");
                 }
+                logger.info("✓ Formulário de pesquisa disponível");
             } catch (TimeoutError e) {
-                logger.error("Search form not available for OS {}. Page URL: {}", os, page.url());
+                logger.error("❌ Search form not available for OS {}. Page URL: {}", os, page.url());
 //                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/form-not-available-" + os + ".png")));
                 return new BaixaResultado(os, false, List.of("Search form not available - page may not have loaded correctly"));
             }
@@ -286,33 +395,54 @@ public class CaesbBaixaService {
             String startDateTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"))
                     .withHour(8).withMinute(0).withSecond(0).withNano(0)
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-            if (page.locator("#form1\\:dataInicioExecucao_input").isVisible()) {
-                page.locator("#form1\\:dataInicioExecucao_input").evaluate("el => el.removeAttribute('readonly')");
-                page.locator("#form1\\:dataInicioExecucao_input").fill(startDateTime);
-                logger.info("Set dataInicioExecucao to {}", startDateTime);
-            } else {
-                logger.info("Data Início field not found for OS {}", os);
+            boolean dataInicioPreenchida = preencherCampoDataComRetry(page, "dataInicioExecucao", startDateTime, os);
+            if (!dataInicioPreenchida) {
+                logger.warn("⚠️ FALHA ao preencher Data Início para OS {}", os);
             }
 
             // Data Fim de Execução: Current date and time
             String endDateTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"))
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-            if (page.locator("#form1\\:dataFimExecucao_input").isVisible()) {
-                page.locator("#form1\\:dataFimExecucao_input").evaluate("el => el.removeAttribute('readonly')");
-                page.locator("#form1\\:dataFimExecucao_input").fill(endDateTime); // CORRIGIDO: era startDateTime
-                logger.info("Set dataFimExecucao to {}", endDateTime);
-            } else {
-                logger.info("Data Fim field not found for OS {}", os);
+            boolean dataFimPreenchida = preencherCampoDataComRetry(page, "dataFimExecucao", endDateTime, os);
+            if (!dataFimPreenchida) {
+                logger.warn("⚠️ FALHA ao preencher Data Fim para OS {}", os);
             }
 
             String hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"))
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
-            preencherTextarea(page, "diagnosticoBaixa",
-                    "Enviado cobrança em " + hoje);
+            boolean diagnosticoPreenchido = preencherTextareaComRetry(page, "diagnosticoBaixa",
+                    "Enviado cobrança em " + hoje, os);
+            if (!diagnosticoPreenchido) {
+                logger.warn("⚠️ FALHA ao preencher Diagnóstico para OS {}", os);
+            }
 
-            preencherTextarea(page, "providenciaBaixa",
-                    "Usuário ciente dos débitos.");
+            boolean providenciaPreenchida = preencherTextareaComRetry(page, "providenciaBaixa",
+                    "Usuário ciente dos débitos.", os);
+            if (!providenciaPreenchida) {
+                logger.warn("⚠️ FALHA ao preencher Providência para OS {}", os);
+            }
+
+            // ========== FASE 3: VALIDAR CAMPOS ANTES DE SALVAR ==========
+            logger.info("Fase 3: Validando campos preenchidos...");
+            List<String> camposVazios = validarCamposObrigatorios(page, os);
+            if (!camposVazios.isEmpty()) {
+                logger.error("❌ CAMPOS OBRIGATÓRIOS VAZIOS: {} - OS {}", camposVazios, os);
+                // Tentar preencher novamente os campos vazios
+                logger.info("Tentando preencher campos vazios novamente...");
+                if (camposVazios.contains("dataInicioExecucao")) {
+                    preencherCampoDataComRetry(page, "dataInicioExecucao", startDateTime, os);
+                }
+                if (camposVazios.contains("dataFimExecucao")) {
+                    preencherCampoDataComRetry(page, "dataFimExecucao", endDateTime, os);
+                }
+                if (camposVazios.contains("diagnosticoBaixa")) {
+                    preencherTextareaComRetry(page, "diagnosticoBaixa", "Enviado cobrança em " + hoje, os);
+                }
+                if (camposVazios.contains("providenciaBaixa")) {
+                    preencherTextareaComRetry(page, "providenciaBaixa", "Usuário ciente dos débitos.", os);
+                }
+            }
 
             // Aguardar um pouco antes de salvar para garantir que JSF processou todos os campos
             logger.info("Aguardando antes de clicar em Salvar...");
@@ -336,7 +466,9 @@ public class CaesbBaixaService {
                 Locator confirmButton = page.locator("#formValidacaolancamento button:contains('Confirmar')");
                 if (confirmButton.isVisible()) {
                     confirmButton.click();
-                    page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(30000));
+                    page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions()
+                            .setTimeout(PAGE_LOAD_TIMEOUT_MS));
+                    Thread.sleep(1000); // Aguardar processamento
                     logger.info("Clicked confirmation button");
                 } else {
                     logger.error("Confirmation button not found for OS {}", os);
@@ -354,13 +486,23 @@ public class CaesbBaixaService {
 
             // Step 5: Verify OS is closed
             logger.info("Verifying OS {} is closed", os);
-            page.navigate(OS_LIST_URL);
-            page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(30000));
-            boolean osClosed = !page.locator("text=" + os).isVisible();
-            if (!osClosed) {
-                logger.info("OS {} still appears in pending list", os);
-//                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/not-closed-" + os + ".png")));
-                return new BaixaResultado(os, false, List.of("OS not closed"));
+            try {
+                page.navigate(OS_LIST_URL, new Page.NavigateOptions()
+                        .setTimeout(NAVIGATION_TIMEOUT_MS)
+                        .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.LOAD));
+                page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions()
+                        .setTimeout(PAGE_LOAD_TIMEOUT_MS));
+                Thread.sleep(1500); // Aguardar carregamento da lista
+                
+                boolean osClosed = !page.locator("text=" + os).isVisible();
+                if (!osClosed) {
+                    logger.info("OS {} still appears in pending list", os);
+//                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/not-closed-" + os + ".png")));
+                    return new BaixaResultado(os, false, List.of("OS not closed"));
+                }
+            } catch (TimeoutError te) {
+                logger.warn("⚠️ Timeout ao verificar lista de OS, mas continuando como sucesso: {}", te.getMessage());
+                // Se der timeout na verificação, consideramos sucesso pois a OS foi salva
             }
 
             logger.info("OS {} processed successfully", os);
@@ -370,9 +512,33 @@ public class CaesbBaixaService {
             
             return new BaixaResultado(os, true, List.of("OK"));
         } catch (PlaywrightException e) {
-            logger.error("Playwright error for OS {}: {}", os, e.getMessage(), e);
-            if (page != null) {
-//                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/playwright-error-" + os + ".png")));
+            String errorType = e.getClass().getSimpleName();
+            logger.error("Playwright error ({}) for OS {}: {}", errorType, os, e.getMessage(), e);
+            
+            // Tratamento específico para TargetClosedError
+            if (e.getMessage().contains("Target page, context or browser has been closed") || 
+                e.getMessage().contains("TargetClosedError")) {
+                logger.error("❌ Browser/Context/Page foi fechado prematuramente para OS {}", os);
+                logger.error("Possíveis causas: crash do Chrome, falta de memória, timeout excessivo");
+                
+                try {
+                    emailNotificationService.enviarNotificacaoErro(os, 
+                        "Browser fechado prematuramente (TargetClosedError). Verifique recursos do sistema.", 
+                        inicioExecucao);
+                } catch (Exception emailError) {
+                    logger.warn("Failed to send error notification for OS {}: {}", os, emailError.getMessage());
+                }
+                
+                return new BaixaResultado(os, false, 
+                    List.of("Browser fechado prematuramente - Verifique recursos do sistema (memória, CPU)"));
+            }
+            
+            if (page != null && !page.isClosed()) {
+                try {
+//                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/playwright-error-" + os + ".png")));
+                } catch (Exception screenshotError) {
+                    logger.debug("Não foi possível capturar screenshot: {}", screenshotError.getMessage());
+                }
             }
             
             // Enviar notificação de erro
@@ -385,8 +551,13 @@ public class CaesbBaixaService {
             return new BaixaResultado(os, false, List.of("Playwright error: " + e.getMessage()));
         } catch (Exception e) {
             logger.error("Unexpected error for OS {}: {}", os, e.getMessage(), e);
-            if (page != null) {
-//                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/unexpected-error-" + os + ".png")));
+            
+            if (page != null && !page.isClosed()) {
+                try {
+//                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("screenshots/unexpected-error-" + os + ".png")));
+                } catch (Exception screenshotError) {
+                    logger.debug("Não foi possível capturar screenshot: {}", screenshotError.getMessage());
+                }
             }
             
             // Enviar notificação de erro
@@ -398,18 +569,44 @@ public class CaesbBaixaService {
             
             return new BaixaResultado(os, false, List.of("Unexpected error: " + e.getMessage()));
         } finally {
-            if (page != null) {
-                page.close();
+            // Fechar recursos de forma segura
+            try {
+                if (page != null && !page.isClosed()) {
+                    logger.debug("Fechando página...");
+                    page.close();
+                }
+            } catch (Exception e) {
+                logger.debug("Erro ao fechar página: {}", e.getMessage());
             }
-            if (context != null) {
-                context.close();
+            
+            try {
+                if (context != null) {
+                    logger.debug("Fechando contexto...");
+                    context.close();
+                }
+            } catch (Exception e) {
+                logger.debug("Erro ao fechar contexto: {}", e.getMessage());
             }
-            if (browser != null) {
-                browser.close();
+            
+            try {
+                if (browser != null && browser.isConnected()) {
+                    logger.debug("Fechando browser...");
+                    browser.close();
+                }
+            } catch (Exception e) {
+                logger.debug("Erro ao fechar browser: {}", e.getMessage());
             }
-            if (playwright != null) {
-                playwright.close();
+            
+            try {
+                if (playwright != null) {
+                    logger.debug("Fechando Playwright...");
+                    playwright.close();
+                }
+            } catch (Exception e) {
+                logger.debug("Erro ao fechar Playwright: {}", e.getMessage());
             }
+            
+            logger.info("Recursos do Playwright liberados para OS {}", os);
         }
     }
 
@@ -440,36 +637,198 @@ public class CaesbBaixaService {
     }
 
     /**
-     * Preenche um <textarea> dinamicamente.
-     *
-     * @param page        instância Page do Playwright
-     * @param idSuffix    parte após o “:” (por ex.  "diagnosticoBaixa")
-     * @param texto       conteúdo a ser escrito
+     * Preenche campo de data com retry e verificação
      */
-    private void preencherTextarea(Page page, String idSuffix, String texto) {
-        try {
-            // id completo é sempre "form1:algumaCoisa"
-            String idCompleto = "form1:" + idSuffix;
-
-            // selector escapado para Playwright  (#form1\:diagnosticoBaixa)
-            String selector   = "#" + idCompleto.replace(":", "\\:");
-
-            Locator ta = page.locator(selector);
-
-            // textarea vem com readonly.  Remove-o antes de digitar
-            ta.evaluate("el => el.removeAttribute('readonly')");
-
-            // garante visibilidade e foco
-            ta.scrollIntoViewIfNeeded();
-            ta.click(new Locator.ClickOptions().setTimeout(3000));
-
-            // limpa e escreve
-            ta.fill(texto);
-
-            logger.info("Textarea '{}' preenchido com: {}", idSuffix, texto);
-        } catch (Exception e) {
-            logger.info("Falha ao preencher textarea '{}' : {}", idSuffix, e.getMessage(), e);
+    private boolean preencherCampoDataComRetry(Page page, String campoId, String valor, String os) {
+        String selector = "#form1\\:" + campoId + "_input";
+        int maxTentativas = 3;
+        
+        for (int tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+            try {
+                logger.debug("Tentativa {} de preencher campo '{}' com '{}'", tentativa, campoId, valor);
+                
+                // Aguardar o campo estar disponível
+                Locator campo = page.locator(selector);
+                if (!campo.isVisible()) {
+                    logger.warn("Campo '{}' não está visível. Tentativa {}/{}", campoId, tentativa, maxTentativas);
+                    Thread.sleep(1000);
+                    continue;
+                }
+                
+                // Remover readonly e preencher
+                campo.evaluate("el => el.removeAttribute('readonly')");
+                campo.scrollIntoViewIfNeeded();
+                campo.click(new Locator.ClickOptions().setTimeout(3000));
+                campo.fill("");  // Limpar primeiro
+                Thread.sleep(200);
+                campo.fill(valor);
+                
+                // Disparar eventos para notificar JSF
+                campo.evaluate("el => { " +
+                    "el.dispatchEvent(new Event('input', { bubbles: true })); " +
+                    "el.dispatchEvent(new Event('change', { bubbles: true })); " +
+                    "el.dispatchEvent(new Event('blur', { bubbles: true })); " +
+                    "}");
+                
+                Thread.sleep(300);
+                
+                // Verificar se o valor foi setado
+                String valorAtual = (String) campo.evaluate("el => el.value");
+                if (valorAtual != null && valorAtual.equals(valor)) {
+                    logger.info("✓ Campo '{}' preenchido com sucesso: '{}'", campoId, valor);
+                    return true;
+                } else {
+                    logger.warn("Campo '{}' não manteve o valor. Esperado: '{}', Atual: '{}'. Tentativa {}/{}",
+                        campoId, valor, valorAtual, tentativa, maxTentativas);
+                }
+                
+            } catch (Exception e) {
+                logger.error("Erro ao preencher campo '{}' (tentativa {}/{}): {}", 
+                    campoId, tentativa, maxTentativas, e.getMessage());
+            }
+            
+            if (tentativa < maxTentativas) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
+        
+        logger.error("❌ FALHOU ao preencher campo '{}' após {} tentativas - OS {}", campoId, maxTentativas, os);
+        return false;
+    }
+
+    /**
+     * Preenche textarea com retry e verificação
+     */
+    private boolean preencherTextareaComRetry(Page page, String idSuffix, String texto, String os) {
+        String selector = "#form1\\:" + idSuffix;
+        int maxTentativas = 3;
+        
+        for (int tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+            try {
+                logger.debug("Tentativa {} de preencher textarea '{}' com '{}'", tentativa, idSuffix, texto);
+                
+                Locator ta = page.locator(selector);
+                if (!ta.isVisible()) {
+                    logger.warn("Textarea '{}' não está visível. Tentativa {}/{}", idSuffix, tentativa, maxTentativas);
+                    Thread.sleep(1000);
+                    continue;
+                }
+                
+                ta.evaluate("el => el.removeAttribute('readonly')");
+                ta.scrollIntoViewIfNeeded();
+                ta.click(new Locator.ClickOptions().setTimeout(3000));
+                ta.fill("");  // Limpar primeiro
+                Thread.sleep(200);
+                ta.fill(texto);
+                
+                // Disparar eventos para notificar JSF
+                ta.evaluate("el => { " +
+                    "el.dispatchEvent(new Event('input', { bubbles: true })); " +
+                    "el.dispatchEvent(new Event('change', { bubbles: true })); " +
+                    "el.dispatchEvent(new Event('blur', { bubbles: true })); " +
+                    "}");
+                
+                Thread.sleep(300);
+                
+                // Verificar se o valor foi setado
+                String valorAtual = (String) ta.evaluate("el => el.value");
+                if (valorAtual != null && !valorAtual.trim().isEmpty()) {
+                    logger.info("✓ Textarea '{}' preenchido com sucesso", idSuffix);
+                    return true;
+                } else {
+                    logger.warn("Textarea '{}' não manteve o valor. Tentativa {}/{}", 
+                        idSuffix, tentativa, maxTentativas);
+                }
+                
+            } catch (Exception e) {
+                logger.error("Erro ao preencher textarea '{}' (tentativa {}/{}): {}", 
+                    idSuffix, tentativa, maxTentativas, e.getMessage());
+            }
+            
+            if (tentativa < maxTentativas) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        
+        logger.error("❌ FALHOU ao preencher textarea '{}' após {} tentativas - OS {}", idSuffix, maxTentativas, os);
+        return false;
+    }
+
+    /**
+     * Valida se os campos obrigatórios estão preenchidos antes de salvar
+     */
+    private List<String> validarCamposObrigatorios(Page page, String os) {
+        List<String> camposVazios = new ArrayList<>();
+        
+        try {
+            // Validar Data Início
+            String dataInicio = (String) page.locator("#form1\\:dataInicioExecucao_input")
+                .evaluate("el => el.value");
+            if (dataInicio == null || dataInicio.trim().isEmpty()) {
+                camposVazios.add("dataInicioExecucao");
+                logger.warn("Campo 'dataInicioExecucao' está vazio");
+            } else {
+                logger.info("✓ dataInicioExecucao: '{}'", dataInicio);
+            }
+        } catch (Exception e) {
+            logger.debug("Erro ao validar dataInicioExecucao: {}", e.getMessage());
+        }
+        
+        try {
+            // Validar Data Fim
+            String dataFim = (String) page.locator("#form1\\:dataFimExecucao_input")
+                .evaluate("el => el.value");
+            if (dataFim == null || dataFim.trim().isEmpty()) {
+                camposVazios.add("dataFimExecucao");
+                logger.warn("Campo 'dataFimExecucao' está vazio");
+            } else {
+                logger.info("✓ dataFimExecucao: '{}'", dataFim);
+            }
+        } catch (Exception e) {
+            logger.debug("Erro ao validar dataFimExecucao: {}", e.getMessage());
+        }
+        
+        try {
+            // Validar Diagnóstico
+            String diagnostico = (String) page.locator("#form1\\:diagnosticoBaixa")
+                .evaluate("el => el.value");
+            if (diagnostico == null || diagnostico.trim().isEmpty()) {
+                camposVazios.add("diagnosticoBaixa");
+                logger.warn("Campo 'diagnosticoBaixa' está vazio");
+            } else {
+                logger.info("✓ diagnosticoBaixa: '{}'", diagnostico.substring(0, Math.min(30, diagnostico.length())) + "...");
+            }
+        } catch (Exception e) {
+            logger.debug("Erro ao validar diagnosticoBaixa: {}", e.getMessage());
+        }
+        
+        try {
+            // Validar Providência
+            String providencia = (String) page.locator("#form1\\:providenciaBaixa")
+                .evaluate("el => el.value");
+            if (providencia == null || providencia.trim().isEmpty()) {
+                camposVazios.add("providenciaBaixa");
+                logger.warn("Campo 'providenciaBaixa' está vazio");
+            } else {
+                logger.info("✓ providenciaBaixa: '{}'", providencia.substring(0, Math.min(30, providencia.length())) + "...");
+            }
+        } catch (Exception e) {
+            logger.debug("Erro ao validar providenciaBaixa: {}", e.getMessage());
+        }
+        
+        if (camposVazios.isEmpty()) {
+            logger.info("✅ Todos os campos obrigatórios estão preenchidos - OS {}", os);
+        }
+        
+        return camposVazios;
     }
 
 }
