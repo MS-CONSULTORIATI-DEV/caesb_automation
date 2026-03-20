@@ -1,6 +1,7 @@
 package br.com.caesb.automation.controller;
 
 import br.com.caesb.automation.config.CaesbSession;
+import br.com.caesb.automation.dto.BaixaComSessaoResultado;
 import br.com.caesb.automation.dto.BaixaResultado;
 import br.com.caesb.automation.service.*;
 import org.apache.logging.log4j.LogManager;
@@ -163,8 +164,16 @@ public class CaesbController {
                     String os = osPendentes.get(i);
                     controle.setOsAtual(os);
                     try {
-                        BaixaResultado r = baixaService.baixarOs(session, os);
-//                        BaixaResultado r = new BaixaResultado("teste", true, null);
+                        // Usar baixarOsComAutoLogin para fazer re-login automático se sessão expirar
+                        BaixaComSessaoResultado resultado = baixaService.baixarOsComAutoLogin(session, os);
+                        
+                        // Atualizar sessão se foi renovada
+                        if (resultado.isSessaoRenovada()) {
+                            session = resultado.getSessao();
+                            log.info("[{}] 🔄 Sessão renovada com sucesso - continuando com nova sessão", jobId);
+                        }
+                        
+                        BaixaResultado r = resultado.getResultado();
                         resultados.add(r);
                         log.info("[{}] OS {} ⇒ {}", jobId, os,
                                 r.sucesso() ? "OK" : "ERRO: " + r.mensagens());

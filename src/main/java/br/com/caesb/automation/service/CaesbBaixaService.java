@@ -1,6 +1,7 @@
 package br.com.caesb.automation.service;
 
 import br.com.caesb.automation.config.CaesbSession;
+import br.com.caesb.automation.dto.BaixaComSessaoResultado;
 import br.com.caesb.automation.dto.BaixaResultado;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.Cookie;
@@ -24,15 +25,20 @@ public class CaesbBaixaService {
     
     @Autowired
     private EmailNotificationService emailNotificationService;
+    
+    @Autowired
+    private CaesbLoginService loginService;
+    
     private static final String BASE_URL = "https://sistemas.caesb.df.gov.br/gcom/app/atendimento/os/baixa";
     private static final String OS_LIST_URL = "https://sistemas.caesb.df.gov.br/gcom/app/atendimento/os/controleOs/controle";
     private static final int MAX_RETRIES = 2;
+    private static final int MAX_LOGIN_RETRIES = 2; // Máximo de tentativas de re-login automático
     private static final int RETRY_DELAY_MS = 3000; // Aumentado para 3 segundos
     private static final int ACTION_TIMEOUT_MS = 5000;
     private static final int NAVIGATION_TIMEOUT_MS = 60000; // 60 segundos para navegação
     private static final int PAGE_LOAD_TIMEOUT_MS = 45000; // 45 segundos para carregamento de página
     private static final int DELAY_BETWEEN_REQUESTS_MS = 2000; // Delay entre requisições para evitar rate limiting
-    private static final boolean HIDE_BROWSER = true;
+    private static final boolean HIDE_BROWSER = false;
     
     /**
      * Verifica se a sessão está válida testando acesso à página de baixa
@@ -195,6 +201,84 @@ public class CaesbBaixaService {
     public CaesbBaixaService() {
     }
 
+    /**
+     * Processa baixa de OS com re-login automático em caso de sessão expirada
+     * @param session Sessão atual (pode ser atualizada se expirar)
+     * @param os Número da OS
+     * @return Resultado da baixa com sessão (possivelmente renovada)
+     */
+    public BaixaComSessaoResultado baixarOsComAutoLogin(CaesbSession session, String os) {
+        return baixarOsComAutoLoginInterno(session, os, 0);
+    }
+    
+    /**
+     * Método interno recursivo para processar baixa com re-login automático
+     */
+    private BaixaComSessaoResultado baixarOsComAutoLoginInterno(CaesbSession session, String os, int loginAttempt) {
+        logger.info("Processando OS {} (tentativa de login: {})", os, loginAttempt);
+        
+        BaixaResultado resultado = baixarOs(session, os);
+        
+        // Se falhou por sessão expirada e ainda temos tentativas de login
+        if (!resultado.sucesso() && loginAttempt < MAX_LOGIN_RETRIES) {
+            boolean isSessaoExpirada = resultado.mensagens() != null && resultado.mensagens().stream()
+                .anyMatch(erro -> erro.toLowerCase().contains("session expired") || 
+                                  erro.toLowerCase().contains("sessão expirada"));
+            
+            if (isSessaoExpirada) {
+                logger.warn("⚠️ Sessão expirada detectada para OS {}. Tentativa de re-login {}/{}", 
+                        os, loginAttempt + 1, MAX_LOGIN_RETRIES);
+                
+                try {
+                    logger.info("🔄 Fazendo novo login automaticamente...");
+                    
+                    // Aguardar antes de tentar login para evitar rate limiting
+                    int delayBeforeLogin = 5000; // 5 segundos
+                    logger.info("💤 Aguardando {}ms antes de tentar novo login...", delayBeforeLogin);
+                    Thread.sleep(delayBeforeLogin);
+                    
+                    CaesbSession novaSessao = loginService.login();
+                    logger.info("✅ Novo login realizado com sucesso!");
+                    
+                    // Aguardar mais um pouco antes de processar a OS
+                    logger.info("💤 Aguardando {}ms antes de processar OS novamente...", RETRY_DELAY_MS);
+                    Thread.sleep(RETRY_DELAY_MS);
+                    
+                    // Tentar novamente com nova sessão
+                    logger.info("🔄 Tentando processar OS {} novamente com nova sessão...", os);
+                    return baixarOsComAutoLoginInterno(novaSessao, os, loginAttempt + 1);
+                    
+                } catch (Exception e) {
+                    logger.error("❌ Erro ao fazer re-login automático: {}", e.getMessage(), e);
+                    
+                  /*  try {
+                        emailNotificationService.enviarNotificacaoErro(os, 
+                            "Falha no re-login automático: " + e.getMessage(), 
+                            LocalDateTime.now());
+                    } catch (Exception emailError) {
+                        logger.warn("Falha ao enviar notificação de erro de re-login: {}", emailError.getMessage());
+                    }*/
+                    
+                    BaixaResultado erroResult = new BaixaResultado(os, false, 
+                        List.of("Falha no re-login automático após sessão expirada: " + e.getMessage()));
+                    return new BaixaComSessaoResultado(erroResult, session, false);
+                }
+            }
+        }
+        
+        // Retornar resultado original se não for sessão expirada ou se já esgotou tentativas
+        if (!resultado.sucesso() && loginAttempt >= MAX_LOGIN_RETRIES) {
+            logger.error("❌ Máximo de tentativas de re-login atingido ({}) para OS {}", 
+                    MAX_LOGIN_RETRIES, os);
+        }
+        
+        // Retornar com indicador se a sessão foi renovada (loginAttempt > 0 significa que houve re-login)
+        return new BaixaComSessaoResultado(resultado, session, loginAttempt > 0);
+    }
+
+    /**
+     * Método original de baixa de OS (agora interno, use baixarOsComAutoLogin)
+     */
     public BaixaResultado baixarOs(CaesbSession session, String os) {
         logger.info("========================================");
         logger.info("Starting baixa for OS {}", os);
@@ -212,13 +296,14 @@ public class CaesbBaixaService {
         // Verificar validade da sessão ANTES de iniciar o processo
         if (!verificarSessaoValida(session)) {
             logger.error("❌ Sessão inválida ou expirada para OS {}. Abortando processo.", os);
-            try {
+           
+            /* try {
                 emailNotificationService.enviarNotificacaoErro(os, 
                     "Sessão expirada. Faça login novamente no sistema.", 
                     inicioExecucao);
             } catch (Exception emailError) {
                 logger.warn("Falha ao enviar notificação de sessão expirada: {}", emailError.getMessage());
-            }
+            } */
             return new BaixaResultado(os, false, List.of("Session expired - Faça login novamente"));
         }
         
@@ -780,14 +865,6 @@ public class CaesbBaixaService {
                 e.getMessage().contains("TargetClosedError")) {
                 logger.error("❌ Browser/Context/Page foi fechado prematuramente para OS {}", os);
                 logger.error("Possíveis causas: crash do Chrome, falta de memória, timeout excessivo");
-                
-                try {
-                    emailNotificationService.enviarNotificacaoErro(os, 
-                        "Browser fechado prematuramente (TargetClosedError). Verifique recursos do sistema.", 
-                        inicioExecucao);
-                } catch (Exception emailError) {
-                    logger.warn("Failed to send error notification for OS {}: {}", os, emailError.getMessage());
-                }
                 
                 return new BaixaResultado(os, false, 
                     List.of("Browser fechado prematuramente - Verifique recursos do sistema (memória, CPU)"));
